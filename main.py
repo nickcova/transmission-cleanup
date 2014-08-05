@@ -25,17 +25,18 @@
 import subprocess
 
 def main():
-	
-    result = subprocess.check_output(["transmission-remote","--auth=transmission:transmission", "-l"])    
-    splitResult = result.split("\n")
-    
+
+    commandResult = subprocess.check_output(["transmission-remote","--auth=transmission:transmission", "-l"])
+    splitResult = commandResult.split("\n")
+
     # Remove items which are just empty strings
     while True:
         try:
             splitResult.remove("")
         except ValueError:
+            # Insert error message here
             break
-	
+
     # Remove first and last items so the list only contains torrent info.
     # If the length of the list is smaller than 2, just exit.
     if len(splitResult) > 2:
@@ -44,10 +45,19 @@ def main():
         print(splitResult)
     else:
         return 0
-    
-    
+
+    # For the remaining items, check if any of them contains '100%'
+    completedTorrents = []
+    for item in splitResult:
+        if "100%" in item:
+            completedTorrents.append(item)
+
+    # TEST
+    for item in completedTorrents:
+        print(item)
+
     return 0
 
 if __name__ == '__main__':
-	main()
+    main()
 
