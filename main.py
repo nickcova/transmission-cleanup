@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  untitled.py
+#  Transmission Cleanup
+#  (main.py)
 #  
 #  Copyright 2014 Nicolas Cova <nicolas.cova.work@gmail.com>
 #  
@@ -42,20 +43,37 @@ def main():
     if len(splitResult) > 2:
         splitResult.pop(0)
         splitResult.pop()
-        print(splitResult)
     else:
         return 0
 
-    # For the remaining items, check if any of them contains '100%'
+    # For the remaining items, check if any of them contains '100%' and
+    # add them to a completed torrents list.
     completedTorrents = []
     for item in splitResult:
         if "100%" in item:
-            completedTorrents.append(item)
+            torrentId = item.lstrip().split()[0]
+            torrentName = item[item.rfind("      "):len(item)].lstrip()
+            completedTorrents.append((torrentId,torrentName))
 
-    # TEST
     for item in completedTorrents:
         print(item)
 
+    # For each torrentId in the completed Torrents list, remove the
+    # trailing spaces and execute the shell command to remove the torrent
+    emailMessage = "The following torrents were removed: \n"
+    torrentsRemoved = False
+    
+    for item in completedTorrents:
+        commandResult = subprocess.check_output(["transmission-remote","--auth=transmission:transmission", "-t", item[0], "--remove"])
+        emailMessage += commandResult.rstrip() + ", Id = "  + item[0] + ", Torrent Name = " + item[1] + "\n"    
+        if "success" in commandResult:
+            torrentsRemoved = True
+
+    if torrentsRemoved == True:
+        ps = subprocess.Popen(('echo', emailMessage), stdout=subprocess.PIPE)
+        output = subprocess.check_output(('mail', '-s', 'Torrents Removed', "email@email.com"), stdin=ps.stdout)
+        ps.wait()
+        
     return 0
 
 if __name__ == '__main__':
