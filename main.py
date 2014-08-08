@@ -27,7 +27,11 @@ import subprocess
 
 def main():
 
-    commandResult = subprocess.check_output(["transmission-remote","--auth=transmission:transmission", "-l"])
+    try:
+        commandResult = subprocess.check_output(["transmission-remote","--auth=transmission:transmission", "-l"])
+    except CalledProcessError:
+        return -1
+        
     splitResult = commandResult.split("\n")
 
     # Remove items which are just empty strings
@@ -63,16 +67,19 @@ def main():
     emailMessage = "The following torrents were removed: \n"
     torrentsRemoved = False
     
-    for item in completedTorrents:
-        commandResult = subprocess.check_output(["transmission-remote","--auth=transmission:transmission", "-t", item[0], "--remove"])
-        emailMessage += commandResult.rstrip() + ", Id = "  + item[0] + ", Torrent Name = " + item[1] + "\n"    
-        if "success" in commandResult:
-            torrentsRemoved = True
+    try:
+        for item in completedTorrents:
+            commandResult = subprocess.check_output(["transmission-remote","--auth=transmission:transmission", "-t", item[0], "--remove"])
+            emailMessage += commandResult.rstrip() + ", Id = "  + item[0] + ", Torrent Name = " + item[1] + "\n"    
+            if "success" in commandResult:
+                torrentsRemoved = True
 
-    if torrentsRemoved == True:
-        ps = subprocess.Popen(('echo', emailMessage), stdout=subprocess.PIPE)
-        output = subprocess.check_output(('mail', '-s', 'Torrents Removed', "email@email.com"), stdin=ps.stdout)
-        ps.wait()
+        if torrentsRemoved == True:
+            ps = subprocess.Popen(('echo', emailMessage), stdout=subprocess.PIPE)
+            output = subprocess.check_output(('mail', '-s', 'Torrents Removed', "email@email.com"), stdin=ps.stdout)
+            ps.wait()
+    except CalledProcessError:
+        return -1
         
     return 0
 
