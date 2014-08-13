@@ -23,6 +23,7 @@
 #  
 #  
 
+import time
 import subprocess
 
 def main():
@@ -30,6 +31,8 @@ def main():
     try:
         commandResult = subprocess.check_output(["transmission-remote","--auth=transmission:transmission", "-l"])
     except CalledProcessError:
+        dateAndTime = time.strftime("%H:%M:%S") + " " + time.strftime("%d/%m/%Y")
+        print(dateAndTime + " ERROR: something went wrong checking the torrents listing.") 
         return -1
         
     splitResult = commandResult.split("\n")
@@ -59,9 +62,6 @@ def main():
             torrentName = item[item.rfind("      "):len(item)].lstrip()
             completedTorrents.append((torrentId,torrentName))
 
-    for item in completedTorrents:
-        print(item)
-
     # For each torrentId in the completed Torrents list, remove the
     # trailing spaces and execute the shell command to remove the torrent
     emailMessage = "The following torrents were removed: \n"
@@ -79,6 +79,12 @@ def main():
             output = subprocess.check_output(('mail', '-s', 'Torrents Removed', "email@email.com"), stdin=ps.stdout)
             ps.wait()
     except CalledProcessError:
+        dateAndTime = time.strftime("%H:%M:%S") + " " + time.strftime("%d/%m/%Y")
+        print(dateAndTime + " ERROR: something went wrong with 'check_output'. " + commandResult)
+        return -1
+    except OSError:
+        dateAndTime = time.strftime("%H:%M:%S") + " " + time.strftime("%d/%m/%Y")
+        print(dateAndTime + " ERROR: something went wrong with 'mail'. " + output)
         return -1
         
     return 0
