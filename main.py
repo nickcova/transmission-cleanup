@@ -29,7 +29,7 @@ import subprocess
 def main():
 
     try:
-        commandResult = subprocess.check_output(["transmission-remote","--auth=transmission:transmission", "-l"])
+        commandResult = subprocess.check_output(["transmission-remote","--auth", "transmission:transmission", "-l"])
     except CalledProcessError:
         dateAndTime = time.strftime("%H:%M:%S") + " " + time.strftime("%d/%m/%Y")
         print(dateAndTime + " ERROR: something went wrong checking the torrents listing.") 
@@ -58,7 +58,7 @@ def main():
     completedTorrents = []
     for item in splitResult:
         if "100%" in item:
-            torrentId = item.lstrip().split()[0]
+            torrentId = item.lstrip().split()[0].rstrip("*")
             torrentName = item[item.rfind("      "):len(item)].lstrip()
             completedTorrents.append((torrentId,torrentName))
 
@@ -69,7 +69,7 @@ def main():
     
     try:
         for item in completedTorrents:
-            commandResult = subprocess.check_output(["transmission-remote","--auth=transmission:transmission", "-t", item[0], "--remove"])
+            commandResult = subprocess.check_output(["transmission-remote","--auth", "transmission:transmission", "-t", item[0], "--remove"])
             emailMessage += commandResult.rstrip() + ", Id = "  + item[0] + ", Torrent Name = " + item[1] + "\n"    
             if "success" in commandResult:
                 torrentsRemoved = True
